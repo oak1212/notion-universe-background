@@ -255,8 +255,27 @@ function eventLabel(type) {
   return "과제";
 }
 function eventsForDate(year, month, day) {
-  const target = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
-  return remoteEvents.filter(ev => ev.date?.start && String(ev.date.start).slice(0,10) === target);
+  const currentDate = new Date(
+    year,
+    month,
+    day
+  );
+
+  currentDate.setHours(0, 0, 0, 0);
+
+  return remoteEvents.filter(ev => {
+    if (!ev.date?.start) return false;
+
+    const startDate = new Date(
+      String(ev.date.start).slice(0, 10) + "T00:00:00"
+    );
+
+    const endDate = new Date(
+      String(ev.date.end || ev.date.start).slice(0, 10) + "T00:00:00"
+    );
+
+    return currentDate >= startDate && currentDate <= endDate;
+  });
 }
 
 const title=document.getElementById("title"),days=document.getElementById("days");
