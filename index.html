@@ -100,6 +100,71 @@ body{
  .day{padding:8px}.num{font-size:15px}.event{font-size:8px;padding:5px 7px}
  .week{font-size:12px}
 }
+
+/* ===== 기간 일정 막대 ===== */
+.event-range{
+  position:absolute;
+  left:3px;
+  height:22px;
+  line-height:22px;
+  padding:0 8px;
+  border-radius:999px;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  font-size:11px;
+  font-weight:600;
+  z-index:20;
+  box-sizing:border-box;
+  pointer-events:auto;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+
+/* 과제 = 핑크 */
+.event-range.task{
+  background:rgba(236,72,153,.78);
+  border:1px solid rgba(255,120,200,.45);
+  box-shadow:0 0 14px rgba(236,72,153,.30);
+}
+
+/* 시험 = 보라 */
+.event-range.exam{
+  background:rgba(139,92,246,.78);
+  border:1px solid rgba(180,140,255,.45);
+  box-shadow:0 0 14px rgba(139,92,246,.30);
+}
+
+/* 일정 = 파랑 */
+.event-range.calendar{
+  background:rgba(59,130,246,.78);
+  border:1px solid rgba(100,180,255,.45);
+  box-shadow:0 0 14px rgba(59,130,246,.30);
+}
+
+.event-range.range-start{
+  border-top-left-radius:999px;
+  border-bottom-left-radius:999px;
+}
+
+.event-range.range-end{
+  border-top-right-radius:999px;
+  border-bottom-right-radius:999px;
+}
+
+.event-range.range-middle{
+  border-radius:0;
+}
+
+@media(max-width:800px){
+  .event-range{
+    height:18px;
+    line-height:18px;
+    font-size:8px;
+    padding:0 6px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -245,9 +310,9 @@ async function loadEvents() {
   }
 }
 function eventTypeClass(type) {
-  if (type === "exam") return "pink";
-  if (type === "calendar") return "purple";
-  return "";
+  if (type === "exam") return "exam";
+  if (type === "calendar") return "calendar";
+  return "task";
 }
 function eventLabel(type) {
   if (type === "exam") return "시험";
@@ -286,44 +351,212 @@ function eventEl(text,type){
  e.innerHTML=`<span class="dot"></span>${text}`;return e;
 }
 function render(){
- const y=view.getFullYear(),m=view.getMonth();
- const months=["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
- title.textContent=`${months[m]} ${y}`;
- days.innerHTML="";
- const first=new Date(y,m,1).getDay(),count=new Date(y,m+1,0).getDate(),prev=new Date(y,m,0).getDate();
+  const y=view.getFullYear(),m=view.getMonth();
 
- for(let i=0;i<42;i++){
-   let n=i-first+1,muted=n<=0||n>count,num=n;
-   if(n<=0)num=prev+n;
-   if(n>count)num=n-count;
-   const d=document.createElement("div");d.className="day";
-   if(muted)d.classList.add("muted");
-   if(i%7===0)d.classList.add("sun");
-   if(i%7===6)d.classList.add("sat");
+  const months=[
+    "JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE",
+    "JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"
+  ];
 
-   const today=new Date();
-   if(!muted&&num===today.getDate()&&m===today.getMonth()&&y===today.getFullYear())d.classList.add("todayDate");
+  title.textContent=`${months[m]} ${y}`;
+  days.innerHTML="";
 
-   const numEl=document.createElement("div");
-   numEl.className="num";numEl.textContent=num;d.appendChild(numEl);
+  const first=new Date(y,m,1).getDay();
 
-   if(!muted){
-     const events=eventsForDate(y,m,num);
-     for(const ev of events.slice(0,3)){
-       d.appendChild(eventEl(
-         `${eventLabel(ev.type)} · ${ev.title || "제목 없음"}`,
-         eventTypeClass(ev.type)
-       ));
-     }
-     if(events.length>3){
-       const more=document.createElement("div");
-       more.className="event";
-       more.innerHTML=`<span class="dot"></span>+${events.length-3}개`;
-       d.appendChild(more);
-     }
-   }
-   days.appendChild(d);
- }
+  /*
+    42개의 날짜 칸을 만든다.
+    이번 달 앞/뒤의 날짜도 달력 모양을 유지하기 위해 표시한다.
+  */
+  for(let i=0;i<42;i++){
+    const cellDate=new Date(y,m,1-first+i);
+    const num=cellDate.getDate();
+
+    const muted=cellDate.getMonth()!==m;
+
+    const d=document.createElement("div");
+    d.className="day";
+
+    if(muted)d.classList.add("muted");
+    if(i%7===0)d.classList.add("sun");
+    if(i%7===6)d.classList.add("sat");
+
+    /*
+      오늘 날짜 표시
+    */
+    const today=new Date();
+
+    if(
+      !muted &&
+      num===today.getDate() &&
+      cellDate.getMonth()===today.getMonth() &&
+      cellDate.getFullYear()===today.getFullYear()
+    ){
+      d.classList.add("todayDate");
+    }
+
+    /*
+      날짜 숫자
+    */
+    const numEl=document.createElement("div");
+    numEl.className="num";
+    numEl.textContent=num;
+    d.appendChild(numEl);
+
+    days.appendChild(d);
+  }
+
+  /*
+    ==================================================
+    기간 일정 막대
+    ==================================================
+  */
+
+  /*
+    현재 달력에 실제로 보이는 첫 번째/마지막 날짜
+  */
+  const visibleStart=new Date(y,m,1-first);
+  const visibleEnd=new Date(y,m,1-first+41);
+
+  /*
+    현재 달력과 날짜가 겹치는 일정만 가져온다.
+  */
+  const visibleEvents=remoteEvents.filter(ev=>{
+    if(!ev.date?.start)return false;
+
+    const eventStart=new Date(
+      String(ev.date.start).slice(0,10)+"T00:00:00"
+    );
+
+    const eventEnd=new Date(
+      String(ev.date.end || ev.date.start).slice(0,10)+"T00:00:00"
+    );
+
+    return eventStart<=visibleEnd && eventEnd>=visibleStart;
+  });
+
+  /*
+    일정별로 기간 막대를 만든다.
+  */
+  visibleEvents.forEach(ev=>{
+
+    const eventStart=new Date(
+      String(ev.date.start).slice(0,10)+"T00:00:00"
+    );
+
+    const eventEnd=new Date(
+      String(ev.date.end || ev.date.start).slice(0,10)+"T00:00:00"
+    );
+
+    /*
+      일정의 시작/끝을 달력의 42칸 안에서 계산한다.
+    */
+    let startIndex=Math.floor(
+      (eventStart-visibleStart)/86400000
+    );
+
+    let endIndex=Math.floor(
+      (eventEnd-visibleStart)/86400000
+    );
+
+    /*
+      화면 밖의 날짜는 달력 범위 안으로 잘라낸다.
+    */
+    startIndex=Math.max(0,startIndex);
+    endIndex=Math.min(41,endIndex);
+
+    /*
+      기간이 여러 주에 걸쳐 있으면
+      주마다 하나의 막대로 나눈다.
+      예:
+      8/30 ~ 9/3
+      → 첫 주의 8/30~8/30
+      → 다음 주의 8/31~9/3
+    */
+    let segmentStart=startIndex;
+
+    while(segmentStart<=endIndex){
+
+      const week=Math.floor(segmentStart/7);
+
+      const weekStart=week*7;
+      const weekEnd=weekStart+6;
+
+      const segmentEnd=Math.min(endIndex,weekEnd);
+
+      const startCell=days.children[segmentStart];
+
+      if(!startCell){
+        segmentStart=segmentEnd+1;
+        continue;
+      }
+
+      /*
+        기간 막대 생성
+      */
+      const bar=document.createElement("div");
+
+      const type=eventTypeClass(ev.type);
+
+      bar.className=`event-range ${type}`;
+
+      /*
+        전체 일정의 시작/끝인지 판단
+      */
+      const isStart=segmentStart===startIndex;
+      const isEnd=segmentEnd===endIndex;
+
+      if(isStart){
+        bar.classList.add("range-start");
+      }
+
+      if(isEnd){
+        bar.classList.add("range-end");
+      }
+
+      if(!isStart && !isEnd){
+        bar.classList.add("range-middle");
+      }
+
+      /*
+        일정 이름
+      */
+      bar.textContent=
+        `${eventLabel(ev.type)} · ${ev.title || "제목 없음"}`;
+
+      /*
+        마우스를 올리면 전체 제목 확인 가능
+      */
+      bar.title=
+        `${eventLabel(ev.type)} · ${ev.title || "제목 없음"}`;
+
+      /*
+        현재 주에서 차지하는 날짜 수
+      */
+      const span=segmentEnd-segmentStart+1;
+
+      /*
+        여러 일정이 겹칠 경우 사용할 세로 위치.
+        현재는 기본 0번 레인.
+      */
+      const lane=0;
+
+      bar.style.top=`${42 + lane*26}px`;
+
+      /*
+        날짜 칸 하나의 100%를 기준으로
+        여러 칸을 하나의 긴 막대로 확장한다.
+      */
+      bar.style.width=
+        `calc(${span * 100}% - 6px)`;
+
+      startCell.appendChild(bar);
+
+      /*
+        다음 주 구간으로 이동
+      */
+      segmentStart=segmentEnd+1;
+    }
+  });
 }
 
 document.getElementById("prev").onclick=()=>{view.setMonth(view.getMonth()-1);render()};
