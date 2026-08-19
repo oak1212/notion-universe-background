@@ -102,11 +102,16 @@ body{
 }
 
 /* ===== 기간 일정 막대 ===== */
+.days{
+  position:relative;
+  overflow:visible;
+}
+
+/* 날짜 칸보다 위에 떠 있는 기간 막대 */
 .event-range{
   position:absolute;
-  left:3px;
-  height:22px;
-  line-height:22px;
+  height:20px;
+  line-height:20px;
   padding:0 8px;
   border-radius:999px;
   overflow:hidden;
@@ -114,31 +119,32 @@ body{
   text-overflow:ellipsis;
   font-size:11px;
   font-weight:600;
-  z-index:20;
+  z-index:30;
   box-sizing:border-box;
   pointer-events:auto;
   backdrop-filter:blur(6px);
   -webkit-backdrop-filter:blur(6px);
+  min-width:0;
 }
 
 /* 과제 = 핑크 */
 .event-range.task{
-  background:rgba(236,72,153,.78);
-  border:1px solid rgba(255,120,200,.45);
+  background:rgba(236,72,153,.82);
+  border:1px solid rgba(255,150,220,.50);
   box-shadow:0 0 14px rgba(236,72,153,.30);
 }
 
 /* 시험 = 보라 */
 .event-range.exam{
-  background:rgba(139,92,246,.78);
-  border:1px solid rgba(180,140,255,.45);
+  background:rgba(139,92,246,.82);
+  border:1px solid rgba(190,160,255,.55);
   box-shadow:0 0 14px rgba(139,92,246,.30);
 }
 
 /* 일정 = 파랑 */
 .event-range.calendar{
-  background:rgba(59,130,246,.78);
-  border:1px solid rgba(100,180,255,.45);
+  background:rgba(59,130,246,.82);
+  border:1px solid rgba(120,190,255,.55);
   box-shadow:0 0 14px rgba(59,130,246,.30);
 }
 
@@ -164,7 +170,6 @@ body{
     padding:0 6px;
   }
 }
-
 </style>
 </head>
 <body>
@@ -365,12 +370,10 @@ function render(){
 
   /*
     42개의 날짜 칸을 만든다.
-    이번 달 앞/뒤의 날짜도 달력 모양을 유지하기 위해 표시한다.
   */
   for(let i=0;i<42;i++){
     const cellDate=new Date(y,m,1-first+i);
     const num=cellDate.getDate();
-
     const muted=cellDate.getMonth()!==m;
 
     const d=document.createElement("div");
@@ -380,9 +383,6 @@ function render(){
     if(i%7===0)d.classList.add("sun");
     if(i%7===6)d.classList.add("sat");
 
-    /*
-      오늘 날짜 표시
-    */
     const today=new Date();
 
     if(
@@ -394,9 +394,6 @@ function render(){
       d.classList.add("todayDate");
     }
 
-    /*
-      날짜 숫자
-    */
     const numEl=document.createElement("div");
     numEl.className="num";
     numEl.textContent=num;
@@ -409,17 +406,17 @@ function render(){
     ==================================================
     기간 일정 막대
     ==================================================
+    일정 막대를 날짜 칸 안에 넣지 않고
+    .days 전체 위에 겹쳐서 그린다.
+
+    그래서:
+      8/20 ───────── 8/22
+    처럼 한 줄로 정확하게 이어진다.
   */
 
-  /*
-    현재 달력에 실제로 보이는 첫 번째/마지막 날짜
-  */
   const visibleStart=new Date(y,m,1-first);
   const visibleEnd=new Date(y,m,1-first+41);
 
-  /*
-    현재 달력과 날짜가 겹치는 일정만 가져온다.
-  */
   const visibleEvents=remoteEvents.filter(ev=>{
     if(!ev.date?.start)return false;
 
@@ -435,8 +432,11 @@ function render(){
   });
 
   /*
-    일정별로 기간 막대를 만든다.
+    같은 주에 일정이 겹치면
+    서로 다른 줄(lane)에 배치한다.
   */
+  const lanes=Array.from({length:6},()=>[]);
+
   visibleEvents.forEach(ev=>{
 
     const eventStart=new Date(
@@ -447,9 +447,6 @@ function render(){
       String(ev.date.end || ev.date.start).slice(0,10)+"T00:00:00"
     );
 
-    /*
-      일정의 시작/끝을 달력의 42칸 안에서 계산한다.
-    */
     let startIndex=Math.floor(
       (eventStart-visibleStart)/86400000
     );
@@ -458,102 +455,89 @@ function render(){
       (eventEnd-visibleStart)/86400000
     );
 
-    /*
-      화면 밖의 날짜는 달력 범위 안으로 잘라낸다.
-    */
     startIndex=Math.max(0,startIndex);
     endIndex=Math.min(41,endIndex);
 
-    /*
-      기간이 여러 주에 걸쳐 있으면
-      주마다 하나의 막대로 나눈다.
-      예:
-      8/30 ~ 9/3
-      → 첫 주의 8/30~8/30
-      → 다음 주의 8/31~9/3
-    */
     let segmentStart=startIndex;
 
     while(segmentStart<=endIndex){
 
       const week=Math.floor(segmentStart/7);
-
       const weekStart=week*7;
       const weekEnd=weekStart+6;
-
       const segmentEnd=Math.min(endIndex,weekEnd);
 
-      const startCell=days.children[segmentStart];
+      /*
+        이 주에서 사용할 lane을 찾는다.
+        겹치지 않는 첫 번째 줄을 사용한다.
+      */
+      let lane=0;
 
-      if(!startCell){
-        segmentStart=segmentEnd+1;
-        continue;
+      while(lane<3){
+        const overlap=lanes[week].some(item =>
+          !(segmentEnd<item.start || segmentStart>item.end) &&
+          item.lane===lane
+        );
+
+        if(!overlap)break;
+        lane++;
       }
 
+      if(lane>=3)lane=2;
+
+      lanes[week].push({
+        start:segmentStart,
+        end:segmentEnd,
+        lane
+      });
+
       /*
-        기간 막대 생성
+        전체 달력 기준 위치
+        --------------------------------
+        left  = 시작 요일
+        width = 기간 날짜 수
+        top   = 주차 + 일정 줄
       */
+      const leftPercent=(segmentStart%7)*(100/7);
+      const widthPercent=(segmentEnd-segmentStart+1)*(100/7);
+
       const bar=document.createElement("div");
 
       const type=eventTypeClass(ev.type);
-
       bar.className=`event-range ${type}`;
 
-      /*
-        전체 일정의 시작/끝인지 판단
-      */
       const isStart=segmentStart===startIndex;
       const isEnd=segmentEnd===endIndex;
 
-      if(isStart){
-        bar.classList.add("range-start");
-      }
+      if(isStart)bar.classList.add("range-start");
+      if(isEnd)bar.classList.add("range-end");
+      if(!isStart && !isEnd)bar.classList.add("range-middle");
 
-      if(isEnd){
-        bar.classList.add("range-end");
-      }
-
-      if(!isStart && !isEnd){
-        bar.classList.add("range-middle");
-      }
-
-      /*
-        일정 이름
-      */
       bar.textContent=
         `${eventLabel(ev.type)} · ${ev.title || "제목 없음"}`;
 
-      /*
-        마우스를 올리면 전체 제목 확인 가능
-      */
       bar.title=
         `${eventLabel(ev.type)} · ${ev.title || "제목 없음"}`;
 
       /*
-        현재 주에서 차지하는 날짜 수
+        날짜 숫자 아래에 일정 막대를 배치한다.
+        각 주 높이는 1/6이다.
       */
-      const span=segmentEnd-segmentStart+1;
+      bar.style.left=
+        `calc(${leftPercent}% + 3px)`;
 
-      /*
-        여러 일정이 겹칠 경우 사용할 세로 위치.
-        현재는 기본 0번 레인.
-      */
-      const lane=0;
-
-      bar.style.top=`${42 + lane*26}px`;
-
-      /*
-        날짜 칸 하나의 100%를 기준으로
-        여러 칸을 하나의 긴 막대로 확장한다.
-      */
       bar.style.width=
-        `calc(${span * 100}% - 6px)`;
+        `calc(${widthPercent}% - 6px)`;
 
-      startCell.appendChild(bar);
+      bar.style.top=
+        `calc(${week * (100/6)}% + ${43 + lane*22}px)`;
 
       /*
-        다음 주 구간으로 이동
+        .days의 직접 자식으로 추가한다.
+        absolute이므로 42개 grid 칸의 배치를 방해하지 않는다.
       */
+      days.appendChild(bar);
+
       segmentStart=segmentEnd+1;
     }
   });
