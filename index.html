@@ -15,153 +15,155 @@ body {
 #space { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 .vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,8,.15) 65%, rgba(0,0,8,.55) 100%); }
 
-/* 🌟 캘린더 크기를 더 넉넉하게 키움 */
 .calendar {
   position: relative; z-index: 2;
-  width: min(1300px, calc(100vw - 30px));
-  height: min(850px, calc(100vh - 30px));
-  margin: 15px auto;
-  padding: 24px 28px;
+  width: min(1150px, calc(100vw - 40px));
+  height: min(860px, calc(100vh - 24px));
+  margin: 12px auto;
+  padding: 28px 28px 24px;
   border: 1px solid rgba(158, 125, 255, .38);
   border-radius: 24px;
-  background: rgba(3, 7, 28, .52);
-  backdrop-filter: blur(8px);
+  background: rgba(3, 7, 28, .46);
+  backdrop-filter: blur(5px);
   box-shadow:
     0 0 0 1px rgba(60, 145, 255, .08) inset,
-    0 25px 90px rgba(0, 0, 0, .5),
-    0 0 55px rgba(80, 75, 255, .12);
+    0 25px 90px rgba(0, 0, 0, .42),
+    0 0 55px rgba(80, 75, 255, .10);
 }
 .header {
-  height: 65px; display: flex; align-items: center; justify-content: center;
+  height: 76px; display: flex; align-items: center; justify-content: center;
   position: relative; border-bottom: 1px solid rgba(177, 164, 255, .22);
-  margin-bottom: 12px;
+  margin-bottom: 18px;
 }
 .title {
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 34px; letter-spacing: .18em; font-weight: 500;
+  font-size: 38px; letter-spacing: .18em; font-weight: 500;
   text-shadow: 0 0 18px rgba(205, 180, 255, .35);
 }
 .nav { position: absolute; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; }
 .nav button {
   pointer-events: auto;
-  width: 44px; height: 44px; border-radius: 50%;
+  width: 50px; height: 50px; border-radius: 50%;
   border: 1px solid rgba(155, 120, 255, .7);
-  background: rgba(5, 8, 35, .45); color: #fff; font-size: 28px; line-height: 1;
+  background: rgba(5, 8, 35, .45); color: #fff; font-size: 32px; line-height: 1;
   cursor: pointer; box-shadow: 0 0 20px rgba(110, 85, 255, .12);
 }
 .nav button:hover { background: rgba(85, 80, 255, .18); box-shadow: 0 0 25px rgba(100, 100, 255, .3); }
 .nav .today {
-  width: auto; padding: 0 20px; border-radius: 28px; font-size: 15px;
-  position: absolute; right: 54px; transform: none;
+  width: auto; padding: 0 22px; border-radius: 28px; font-size: 16px;
+  position: absolute; right: 58px; transform: none;
 }
 .week { 
   display: grid; grid-template-columns: repeat(7, 1fr);
-  height: 38px; align-items: center; text-align: center;
-  font-size: 15px; letter-spacing: .05em; color: #cbd0ef;
+  height: 48px; align-items: center; text-align: center;
+  font-size: 16px; letter-spacing: .05em; color: #cbd0ef;
 }
 .week div:first-child { color: #ff4fbd; }
 .week div:last-child { color: #39aaff; }
 
-/* 🌟 반듯하고 고정된 6주 그리드 레이아웃 */
+/* ===== 🚀 새롭게 짠 달력 그리드 구조 ===== */
 .days { 
-  height: calc(100% - 116px); 
-  display: grid;
-  grid-template-rows: repeat(6, 1fr);
-  grid-template-columns: repeat(7, 1fr);
-  border-top: 1px solid rgba(128, 139, 210, .22);
-  border-left: 1px solid rgba(128, 139, 210, .22);
-}
-
-.day {
-  position: relative;
-  padding: 8px;
-  padding-top: 32px; /* 날짜 숫자 공간 확보 */
-  border-right: 1px solid rgba(128, 139, 210, .22);
-  border-bottom: 1px solid rgba(128, 139, 210, .22);
-  background: rgba(0, 6, 28, .15);
+  height: calc(100% - 134px); 
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  overflow: hidden;
+  overflow-y: auto; /* 내부 스크롤 허용 */
+  overflow-x: hidden;
+  border-top: 1px solid rgba(128, 139, 210, .22);
+  border-left: 1px solid rgba(128, 139, 210, .22);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(155, 120, 255, 0.4) transparent;
 }
-.day:hover { background: rgba(64, 80, 180, .08); }
+.days::-webkit-scrollbar { width: 6px; }
+.days::-webkit-scrollbar-thumb { background: rgba(155, 120, 255, 0.4); border-radius: 6px; }
+
+/* 1주일 단위 행 */
+.week-row {
+  position: relative;
+  flex: 1 1 calc(100% / 6);
+  min-height: calc(100% / 6);
+}
+
+/* 배경 날짜 칸 레이어 */
+.bg-cells {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  pointer-events: none; /* 클릭 이벤트 통과 */
+}
+.day {
+  position: relative;
+  border-right: 1px solid rgba(128, 139, 210, .22);
+  border-bottom: 1px solid rgba(128, 139, 210, .22);
+  pointer-events: auto; /* 날짜 호버 인식을 위해 다시 켬 */
+}
+.day:hover { background: rgba(64, 80, 180, .10); }
 
 .num {
-  position: absolute; top: 8px; right: 8px;
-  font-size: 16px; line-height: 1; font-weight: 400;
+  position: absolute; top: 10px; right: 10px;
+  font-size: 18px; line-height: 1; font-weight: 400;
   color: #edf0ff; z-index: 5;
 }
 .day.sun .num { color: #ff4db9; }
 .day.sat .num { color: #39aaff; }
 .muted { opacity: .28; }
 .todayDate .num {
-  width: 26px; height: 26px; top: 6px; right: 6px;
+  width: 29px; height: 29px; top: 7px; right: 7px;
   display: flex; align-items: center; justify-content: center;
   border-radius: 50%; border: 1.5px solid #9b5cff;
   box-shadow: 0 0 8px rgba(108, 99, 255, .85);
-  background: rgba(76, 48, 170, .16); font-size: 14px;
+  background: rgba(76, 48, 170, .16); font-size: 16px;
 }
 
-/* 🌟 일정 아이템 스타일 */
-.event-item {
-  font-size: 11px;
-  padding: 3px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
+/* ===== 🗓️ 개선된 일정 레이어 ===== */
+.events-layer {
+  position: relative;
+  margin-top: 42px; /* 숫자를 가리지 않도록 넉넉히 띄움 */
+  margin-bottom: 8px; /* 아래쪽 여백 */
+  pointer-events: none;
+  height: calc(var(--max-lane, 0) * 28px); /* 일정 개수만큼 높이 자동 조절 */
+  transition: height 0.2s ease;
+}
+
+.event-range {
+  position: absolute;
+  top: calc(var(--lane, 0) * 28px); /* 차곡차곡 쌓임 */
+  height: 20px; 
+  line-height: 20px;
+  padding: 0 6px;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
+  font-size: 11px;
   font-weight: 500;
-  cursor: pointer;
-}
-.event-item.calendar { background: rgba(69, 169, 255, 0.22); border-left: 3px solid #45a9ff; color: #c4e4ff; }
-.event-item.task { background: rgba(255, 91, 189, 0.22); border-left: 3px solid #ff5bbd; color: #ffcceb; }
-.event-item.exam { background: rgba(180, 119, 255, 0.22); border-left: 3px solid #b477ff; color: #e5ccff; }
-
-/* 🌟 "+N개 더보기" 버튼 스타일 */
-.more-btn {
-  font-size: 10px;
-  color: #bfaaff;
-  background: rgba(155, 120, 255, 0.15);
-  padding: 2px 6px;
-  border-radius: 4px;
-  text-align: center;
-  cursor: pointer;
-  border: 1px dashed rgba(155, 120, 255, 0.4);
-}
-.more-btn:hover {
-  background: rgba(155, 120, 255, 0.3);
+  pointer-events: auto;
   color: #fff;
 }
 
-/* 🌟 숨겨진 일정을 보여주는 팝업 모달창 */
-#modal {
-  display: none;
-  position: fixed; inset: 0; z-index: 1000;
-  background: rgba(1, 3, 11, 0.7);
-  backdrop-filter: blur(4px);
-  align-items: center; justify-content: center;
-}
-.modal-content {
-  width: 340px; max-height: 400px;
-  background: #080c24;
-  border: 1px solid rgba(158, 125, 255, .5);
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-  display: flex; flex-direction: column; gap: 10px;
-}
-.modal-header {
-  font-size: 16px; font-weight: bold; color: #fff;
-  border-bottom: 1px solid rgba(158, 125, 255, .2);
-  padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
-}
-.modal-close {
-  background: none; border: none; color: #aaa; font-size: 18px; cursor: pointer;
-}
-.modal-close:hover { color: #fff; }
-.modal-body {
-  overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
-  scrollbar-width: thin; scrollbar-color: rgba(155, 120, 255, 0.4) transparent;
+/* 테마 색상 */
+.event-range.calendar { background: rgba(69, 169, 255, 0.25); border-left: 3px solid #45a9ff; color: #c4e4ff; }
+.event-range.task { background: rgba(255, 91, 189, 0.25); border-left: 3px solid #ff5bbd; color: #ffcceb; }
+.event-range.exam { background: rgba(180, 119, 255, 0.25); border-left: 3px solid #b477ff; color: #e5ccff; }
+
+/* 모서리 다듬기 */
+.event-range.range-both { margin-left: 4px; margin-right: 4px; border-radius: 4px; }
+.event-range.range-start { margin-left: 4px; margin-right: 0; border-radius: 4px 0 0 4px; border-right: none; }
+.event-range.range-end { margin-left: 0; margin-right: 4px; border-radius: 0 4px 4px 0; border-left: none; }
+.event-range.range-middle { margin-left: 0; margin-right: 0; border-radius: 0; border-left: none; border-right: none; }
+
+/* 모바일 뷰어 대응 (비율 축소) */
+@media(max-width:800px){
+  .calendar { width: calc(100vw - 18px); height: calc(100vh - 18px); margin: 9px; padding: 18px; }
+  .title { font-size: 25px; letter-spacing: .1em; }
+  .nav button { width: 40px; height: 40px; font-size: 25px; }
+  .nav .today { padding: 0 14px; font-size: 13px; right: 48px; }
+  .day { padding: 8px; }
+  .num { top: 8px; right: 8px; font-size: 15px; }
+  .todayDate .num { width: 24px; height: 24px; top: 5px; right: 5px; font-size: 13px; }
+  .week { font-size: 12px; }
+  
+  .events-layer { margin-top: 32px; height: calc(var(--max-lane, 0) * 22px); }
+  .event-range { top: calc(var(--lane, 0) * 22px); height: 16px; line-height: 16px; font-size: 9px; padding: 0 4px; }
 }
 </style>
 </head>
@@ -184,17 +186,6 @@ body {
   </div>
   <div id="days" class="days"></div>
 </section>
-
-<!-- 전체 일정 보기 모달 팝업 -->
-<div id="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <span id="modal-date-title">날짜 일정</span>
-      <button class="modal-close" id="modal-close">✕</button>
-    </div>
-    <div class="modal-body" id="modal-event-list"></div>
-  </div>
-</div>
 
 <script>
 const canvas=document.getElementById("space"),ctx=canvas.getContext("2d");
@@ -323,6 +314,7 @@ function eventTypeClass(type) {
   if (type === "calendar") return "calendar";
   return "task";
 }
+
 function eventLabel(type) {
   if (type === "exam") return "시험";
   if (type === "calendar") return "일정";
@@ -331,11 +323,6 @@ function eventLabel(type) {
 
 const title = document.getElementById("title");
 const daysContainer = document.getElementById("days");
-const modal = document.getElementById("modal");
-const modalDateTitle = document.getElementById("modal-date-title");
-const modalEventList = document.getElementById("modal-event-list");
-document.getElementById("modal-close").onclick = () => modal.style.display = "none";
-
 let view = new Date(); view.setDate(1);
 
 function render() {
@@ -346,76 +333,129 @@ function render() {
   daysContainer.innerHTML = "";
 
   const first = new Date(y, m, 1).getDay();
-  const cellEvents = Array.from({length: 42}, () => []);
 
-  // 날짜별로 포함되는 일정 분류하기
-  remoteEvents.forEach(ev => {
-    if(!ev.date?.start) return;
-    const sDate = new Date(String(ev.date.start).slice(0,10) + "T00:00:00");
-    const eDate = new Date(String(ev.date.end || ev.date.start).slice(0,10) + "T00:00:00");
+  // 1. 주(Week) 단위로 레이아웃 뼈대 생성
+  for(let w = 0; w < 6; w++) {
+    const weekRow = document.createElement("div");
+    weekRow.className = "week-row";
+    
+    const bgCells = document.createElement("div");
+    bgCells.className = "bg-cells";
+    
+    const eventsLayer = document.createElement("div");
+    eventsLayer.className = "events-layer";
 
-    for(let i=0; i<42; i++) {
+    // 1주일에 7일의 배경 날짜 생성
+    for(let d = 0; d < 7; d++) {
+      const i = w * 7 + d;
       const cellDate = new Date(y, m, 1 - first + i);
-      cellDate.setHours(0,0,0,0);
-      if(cellDate >= sDate && cellDate <= eDate) {
-        cellEvents[i].push(ev);
+      const num = cellDate.getDate();
+      const muted = cellDate.getMonth() !== m;
+
+      const dayEl = document.createElement("div");
+      dayEl.className = "day";
+
+      if(muted) dayEl.classList.add("muted");
+      if(d === 0) dayEl.classList.add("sun");
+      if(d === 6) dayEl.classList.add("sat");
+
+      const today = new Date();
+      if(!muted && num === today.getDate() && cellDate.getMonth() === today.getMonth() && cellDate.getFullYear() === today.getFullYear()){
+        dayEl.classList.add("todayDate");
       }
+
+      const numEl = document.createElement("div");
+      numEl.className = "num";
+      numEl.textContent = num;
+
+      dayEl.appendChild(numEl);
+      bgCells.appendChild(dayEl);
+    }
+
+    weekRow.appendChild(bgCells);
+    weekRow.appendChild(eventsLayer);
+    daysContainer.appendChild(weekRow);
+  }
+
+  // 2. 화면에 보이는 기간 필터링 및 렌더링 준비
+  const visibleStart = new Date(y, m, 1 - first);
+  const visibleEnd = new Date(y, m, 1 - first + 41);
+
+  const visibleEvents = remoteEvents.filter(ev => {
+    if(!ev.date?.start) return false;
+    const eventStart = new Date(String(ev.date.start).slice(0,10) + "T00:00:00");
+    const eventEnd = new Date(String(ev.date.end || ev.date.start).slice(0,10) + "T00:00:00");
+    return eventStart <= visibleEnd && eventEnd >= visibleStart;
+  });
+
+  const lanes = Array.from({length:6}, () => []);
+
+  // 3. 일정을 올바른 층(Lane)에 계산하여 끼워 넣기
+  visibleEvents.forEach(ev => {
+    const eventStart = new Date(String(ev.date.start).slice(0,10) + "T00:00:00");
+    const eventEnd = new Date(String(ev.date.end || ev.date.start).slice(0,10) + "T00:00:00");
+
+    let startIndex = Math.round((eventStart - visibleStart) / 86400000);
+    let endIndex = Math.round((eventEnd - visibleStart) / 86400000);
+
+    startIndex = Math.max(0, startIndex);
+    endIndex = Math.min(41, endIndex);
+
+    let segmentStart = startIndex;
+
+    while(segmentStart <= endIndex) {
+      const week = Math.floor(segmentStart / 7);
+      const weekStart = week * 7;
+      const weekEnd = weekStart + 6;
+      const segmentEnd = Math.min(endIndex, weekEnd);
+
+      let lane = 0;
+      while(lane < 30) { // 안전 장치: 일정이 최대 30개까지 겹쳐도 대응
+        const overlap = lanes[week].some(item =>
+          !(segmentEnd < item.start || segmentStart > item.end) && item.lane === lane
+        );
+        if(!overlap) break;
+        lane++;
+      }
+
+      lanes[week].push({ start: segmentStart, end: segmentEnd, lane: lane });
+
+      // 달력 내에서의 X축 퍼센트 위치와 너비 계산
+      const leftPercent = (segmentStart % 7) * (100 / 7);
+      const widthPercent = (segmentEnd - segmentStart + 1) * (100 / 7);
+
+      const bar = document.createElement("div");
+      bar.className = `event-range ${eventTypeClass(ev.type)}`;
+
+      const isStart = segmentStart === startIndex;
+      const isEnd = segmentEnd === endIndex;
+
+      if(isStart && isEnd) bar.classList.add("range-both");
+      else if(isStart) bar.classList.add("range-start");
+      else if(isEnd) bar.classList.add("range-end");
+      else bar.classList.add("range-middle");
+
+      bar.textContent = isStart ? `${eventLabel(ev.type)} · ${ev.title || "제목 없음"}` : "";
+      bar.title = `${eventLabel(ev.type)} · ${ev.title || "제목 없음"}`;
+
+      bar.style.left = `calc(${leftPercent}% + 4px)`;
+      bar.style.width = `calc(${widthPercent}% - 8px)`;
+      bar.style.setProperty('--lane', lane); // CSS의 top 계산용 변수 넘김
+
+      const targetLayer = daysContainer.children[week].querySelector('.events-layer');
+      targetLayer.appendChild(bar);
+
+      segmentStart = segmentEnd + 1;
     }
   });
 
-  // 42개 칸 생성 및 3개 초과 시 "+N개 더보기" 처리
-  for(let i=0; i<42; i++) {
-    const cellDate = new Date(y, m, 1 - first + i);
-    const num = cellDate.getDate();
-    const muted = cellDate.getMonth() !== m;
-
-    const dayEl = document.createElement("div");
-    dayEl.className = "day";
-    if(muted) dayEl.classList.add("muted");
-    if(i%7 === 0) dayEl.classList.add("sun");
-    if(i%7 === 6) dayEl.classList.add("sat");
-
-    const today = new Date();
-    if(!muted && num === today.getDate() && cellDate.getMonth() === today.getMonth() && cellDate.getFullYear() === today.getFullYear()){
-      dayEl.classList.add("todayDate");
-    }
-
-    const numEl = document.createElement("div");
-    numEl.className = "num";
-    numEl.textContent = num;
-    dayEl.appendChild(numEl);
-
-    const evs = cellEvents[i];
-    const maxShow = 2; // 한 칸에 최대 보여줄 일정 개수
-
-    evs.slice(0, maxShow).forEach(ev => {
-      const item = document.createElement("div");
-      item.className = `event-item ${eventTypeClass(ev.type)}`;
-      item.textContent = `${eventLabel(ev.type)} · ${ev.title || "제목 없음"}`;
-      item.title = `${eventLabel(ev.type)} · ${ev.title || "제목 없음"}`;
-      dayEl.appendChild(item);
-    });
-
-    if(evs.length > maxShow) {
-      const moreBtn = document.createElement("div");
-      moreBtn.className = "more-btn";
-      moreBtn.textContent = `+${evs.length - maxShow}개 더보기`;
-      moreBtn.onclick = (e) => {
-        e.stopPropagation();
-        modalDateTitle.textContent = `${cellDate.getMonth()+1월} ${cellDate.getDate()}일 일정`;
-        modalEventList.innerHTML = "";
-        evs.forEach(ev => {
-          const mItem = document.createElement("div");
-          mItem.className = `event-item ${eventTypeClass(ev.type)}`;
-          mItem.textContent = `${eventLabel(ev.type)} · ${ev.title || "제목 없음"}`;
-          modalEventList.appendChild(mItem);
-        });
-        modal.style.display = "flex";
-      };
-      dayEl.appendChild(moreBtn);
-    }
-
-    daysContainer.appendChild(dayEl);
+  // 4. 각 주(Week)에 일정이 몇 개 겹쳤는지 확인하고, 칸 높이를 동적으로 늘려주기
+  for(let w = 0; w < 6; w++) {
+    let maxLane = -1;
+    lanes[w].forEach(item => { if(item.lane > maxLane) maxLane = item.lane; });
+    
+    const targetLayer = daysContainer.children[w].querySelector('.events-layer');
+    targetLayer.style.setProperty('--max-lane', maxLane >= 0 ? maxLane + 1 : 0);
   }
 }
 
