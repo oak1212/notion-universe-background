@@ -63,7 +63,8 @@ body{
 .week div:last-child{color:#39aaff}
 .days{height:calc(100% - 142px);grid-auto-rows:1fr}
 .day{
-  position:relative;padding:13px 13px;
+  position:relative;
+  padding:10px;
   border-right:1px solid rgba(128,139,210,.22);
   border-bottom:1px solid rgba(128,139,210,.22);
   background:rgba(0,6,28,.18);
@@ -71,7 +72,16 @@ body{
 .day:nth-child(7n+1){border-left:1px solid rgba(128,139,210,.22)}
 .day:nth-child(-n+7){border-top:1px solid rgba(128,139,210,.22)}
 .day:hover{background:rgba(64,80,180,.10)}
-.num{font-size:20px;font-weight:400;color:#edf0ff}
+.num{
+  position:absolute;
+  top:10px;
+  right:10px;
+  font-size:18px;
+  line-height:1;
+  font-weight:400;
+  color:#edf0ff;
+  z-index:4;
+}
 .day.sun .num{color:#ff4db9}
 .day.sat .num{color:#39aaff}
 .muted{opacity:.28}
@@ -87,81 +97,89 @@ body{
 .event.pink .dot{background:#ff48b9;box-shadow:0 0 10px #ff48b9}
 .event.purple .dot{background:#a45cff;box-shadow:0 0 10px #a45cff}
 .todayDate .num{
-  width:58px;height:58px;display:flex;align-items:center;justify-content:center;
-  border-radius:50%;border:2px solid #9b5cff;
-  box-shadow:0 0 15px #6c63ff,0 0 35px rgba(180,70,255,.35);
-  background:rgba(76,48,170,.18);
+  width:29px;
+  height:29px;
+  top:7px;
+  right:7px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  border:1.5px solid #9b5cff;
+  box-shadow:0 0 8px rgba(108,99,255,.85);
+  background:rgba(76,48,170,.16);
+  font-size:16px;
 }
 @media(max-width:800px){
  .calendar{width:calc(100vw - 18px);height:calc(100vh - 18px);margin:9px;padding:18px}
  .title{font-size:25px;letter-spacing:.1em}
  .nav button{width:40px;height:40px;font-size:25px}
  .nav .today{padding:0 14px;font-size:13px;right:48px}
- .day{padding:8px}.num{font-size:15px}.event{font-size:8px;padding:5px 7px}
+ .day{padding:8px}.num{top:8px;right:8px;font-size:15px}.event{font-size:8px;padding:5px 7px}
+ .todayDate .num{width:24px;height:24px;top:5px;right:5px;font-size:13px}
  .week{font-size:12px}
 }
 
-/* ===== 기간 일정 막대 ===== */
+/* ===== 기간 일정: 얇은 선 스타일 ===== */
 .days{
   position:relative;
   overflow:visible;
 }
 
-/* 날짜 칸보다 위에 떠 있는 기간 막대 */
 .event-range{
   position:absolute;
-  height:20px;
-  line-height:20px;
-  padding:0 8px;
-  border-radius:999px;
-  overflow:hidden;
+  height:17px;
+  line-height:14px;
+  padding:0 5px;
+  border:0;
+  border-bottom:2px solid currentColor;
+  border-radius:0;
+  overflow:visible;
   white-space:nowrap;
   text-overflow:ellipsis;
-  font-size:11px;
+  font-size:10px;
   font-weight:600;
   z-index:30;
   box-sizing:border-box;
   pointer-events:auto;
-  backdrop-filter:blur(6px);
-  -webkit-backdrop-filter:blur(6px);
-  min-width:0;
-}
-
-/* 과제 = 핑크 */
-.event-range.task{
-  background:rgba(236,72,153,.82);
-  border:1px solid rgba(255,150,220,.50);
-  box-shadow:0 0 14px rgba(236,72,153,.30);
-}
-
-/* 시험 = 보라 */
-.event-range.exam{
-  background:rgba(139,92,246,.82);
-  border:1px solid rgba(190,160,255,.55);
-  box-shadow:0 0 14px rgba(139,92,246,.30);
+  background:transparent !important;
+  box-shadow:none !important;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+  color:#fff;
 }
 
 /* 일정 = 파랑 */
 .event-range.calendar{
-  background:rgba(59,130,246,.82);
-  border:1px solid rgba(120,190,255,.55);
-  box-shadow:0 0 14px rgba(59,130,246,.30);
+  color:#45a9ff;
+  text-shadow:0 0 7px rgba(69,169,255,.8);
 }
 
+/* 과제 = 핑크 */
+.event-range.task{
+  color:#ff5bbd;
+  text-shadow:0 0 7px rgba(255,91,189,.8);
+}
+
+/* 시험 = 보라 */
+.event-range.exam{
+  color:#b477ff;
+  text-shadow:0 0 7px rgba(180,119,255,.8);
+}
+
+/* 선의 시작/끝을 조금 부드럽게 */
 .event-range.range-start{
-  border-top-left-radius:999px;
-  border-bottom-left-radius:999px;
+  padding-left:5px;
 }
-
 .event-range.range-end{
-  border-top-right-radius:999px;
-  border-bottom-right-radius:999px;
+  padding-right:5px;
 }
-
 .event-range.range-middle{
-  border-radius:0;
+  padding-left:0;
+  padding-right:0;
 }
 
+/* 모바일에서는 날짜와 선을 더 작게 */
 @media(max-width:800px){
   .event-range{
     height:18px;
@@ -370,6 +388,7 @@ function render(){
 
   /*
     42개의 날짜 칸을 만든다.
+    날짜 숫자는 CSS로 오른쪽 위에 배치한다.
   */
   for(let i=0;i<42;i++){
     const cellDate=new Date(y,m,1-first+i);
@@ -397,23 +416,22 @@ function render(){
     const numEl=document.createElement("div");
     numEl.className="num";
     numEl.textContent=num;
-    d.appendChild(numEl);
 
+    d.appendChild(numEl);
     days.appendChild(d);
   }
 
   /*
-    ==================================================
-    기간 일정 막대
-    ==================================================
-    일정 막대를 날짜 칸 안에 넣지 않고
-    .days 전체 위에 겹쳐서 그린다.
+    --------------------------------------------
+    기간 일정 선
+    --------------------------------------------
+    일정은 색깔이 있는 굵은 박스가 아니라
+    얇은 선 + 작은 제목으로 표시한다.
 
-    그래서:
-      8/20 ───────── 8/22
-    처럼 한 줄로 정확하게 이어진다.
+    🔵 일정
+    🩷 과제
+    🟣 시험
   */
-
   const visibleStart=new Date(y,m,1-first);
   const visibleEnd=new Date(y,m,1-first+41);
 
@@ -432,8 +450,8 @@ function render(){
   });
 
   /*
-    같은 주에 일정이 겹치면
-    서로 다른 줄(lane)에 배치한다.
+    주별로 일정 줄(lane)을 관리한다.
+    같은 기간에 일정이 겹치면 서로 다른 줄에 놓는다.
   */
   const lanes=Array.from({length:6},()=>[]);
 
@@ -468,12 +486,11 @@ function render(){
       const segmentEnd=Math.min(endIndex,weekEnd);
 
       /*
-        이 주에서 사용할 lane을 찾는다.
-        겹치지 않는 첫 번째 줄을 사용한다.
+        겹치지 않는 줄을 찾는다.
       */
       let lane=0;
 
-      while(lane<3){
+      while(lane<5){
         const overlap=lanes[week].some(item =>
           !(segmentEnd<item.start || segmentStart>item.end) &&
           item.lane===lane
@@ -483,8 +500,6 @@ function render(){
         lane++;
       }
 
-      if(lane>=3)lane=2;
-
       lanes[week].push({
         start:segmentStart,
         end:segmentEnd,
@@ -492,19 +507,13 @@ function render(){
       });
 
       /*
-        전체 달력 기준 위치
-        --------------------------------
-        left  = 시작 요일
-        width = 기간 날짜 수
-        top   = 주차 + 일정 줄
+        현재 주에서 시작하는 날짜와 차지하는 폭
       */
       const leftPercent=(segmentStart%7)*(100/7);
       const widthPercent=(segmentEnd-segmentStart+1)*(100/7);
 
       const bar=document.createElement("div");
-
-      const type=eventTypeClass(ev.type);
-      bar.className=`event-range ${type}`;
+      bar.className=`event-range ${eventTypeClass(ev.type)}`;
 
       const isStart=segmentStart===startIndex;
       const isEnd=segmentEnd===endIndex;
@@ -513,35 +522,41 @@ function render(){
       if(isEnd)bar.classList.add("range-end");
       if(!isStart && !isEnd)bar.classList.add("range-middle");
 
-      bar.textContent=
-        `${eventLabel(ev.type)} · ${ev.title || "제목 없음"}`;
+      /*
+        전체 일정의 제목은 시작 구간에만 표시한다.
+        중간 구간은 선만 이어진다.
+      */
+      if(isStart){
+        bar.textContent=
+          `${eventLabel(ev.type)} · ${ev.title || "제목 없음"}`;
+      }else{
+        bar.textContent="";
+      }
 
       bar.title=
         `${eventLabel(ev.type)} · ${ev.title || "제목 없음"}`;
 
       /*
-        날짜 숫자 아래에 일정 막대를 배치한다.
-        각 주 높이는 1/6이다.
+        날짜 숫자를 가리지 않도록
+        각 주의 아래쪽에 얇은 선을 놓는다.
       */
-      bar.style.left=
-        `calc(${leftPercent}% + 3px)`;
-
-      bar.style.width=
-        `calc(${widthPercent}% - 6px)`;
-
-      bar.style.top=
-        `calc(${week * (100/6)}% + ${43 + lane*22}px)`;
+      bar.style.left=`calc(${leftPercent}% + 4px)`;
+      bar.style.width=`calc(${widthPercent}% - 8px)`;
 
       /*
-        .days의 직접 자식으로 추가한다.
-        absolute이므로 42개 grid 칸의 배치를 방해하지 않는다.
+        한 행의 높이 안에서 아래쪽에 배치.
+        여러 일정이 겹치면 lane마다 조금씩 내려간다.
       */
+      bar.style.top=
+        `calc(${week * (100/6)}% + 68px + ${lane*17}px)`;
+
       days.appendChild(bar);
 
       segmentStart=segmentEnd+1;
     }
   });
 }
+
 
 document.getElementById("prev").onclick=()=>{view.setMonth(view.getMonth()-1);render()};
 document.getElementById("next").onclick=()=>{view.setMonth(view.getMonth()+1);render()};
