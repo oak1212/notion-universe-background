@@ -67,7 +67,6 @@ body {
 .week div:first-child { color: #ff4fbd; }
 .week div:last-child { color: #39aaff; }
 
-/* ===== 🚀 달력 그리드 구조 ===== */
 .days { 
   height: calc(100% - 134px); 
   display: flex;
@@ -120,7 +119,6 @@ body {
   background: rgba(76, 48, 170, .16); font-size: 16px;
 }
 
-/* ===== 🗓️ 일정 레이어 및 배지 ===== */
 .events-layer {
   position: relative;
   margin-top: 38px;
@@ -174,7 +172,7 @@ body {
 }
 .more-badge:hover { background: rgba(160, 120, 255, 0.4); color: #fff; }
 
-/* 상세 일정 모달 */
+/* 상세 일정 모달 및 노션 바로가기 버튼 */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 100;
   background: rgba(2, 4, 15, 0.7);
@@ -185,7 +183,7 @@ body {
 }
 .modal-overlay.active { opacity: 1; pointer-events: auto; }
 .modal-card {
-  width: min(460px, calc(100vw - 32px));
+  width: min(480px, calc(100vw - 32px));
   max-height: 80vh;
   background: rgba(12, 16, 45, 0.94);
   border: 1px solid rgba(160, 130, 255, 0.4);
@@ -208,18 +206,30 @@ body {
 .modal-body { overflow-y: auto; display: flex; flex-direction: column; gap: 10px; max-height: 50vh; }
 .modal-event-item {
   padding: 10px 12px; border-radius: 8px; font-size: 13px;
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
 .modal-event-item.calendar { background: rgba(69, 169, 255, 0.15); border-left: 4px solid #45a9ff; }
 .modal-event-item.task { background: rgba(255, 91, 189, 0.15); border-left: 4px solid #ff5bbd; }
 .modal-event-item.exam { background: rgba(180, 119, 255, 0.15); border-left: 4px solid #b477ff; }
 
+/* 🚀 노션 바로가기 전용 버튼 스타일 */
 .notion-link-btn {
-  font-size: 11px; color: #bcaeff; background: rgba(150, 120, 255, 0.2);
-  border: 1px solid rgba(160, 130, 255, 0.4); padding: 4px 8px; border-radius: 6px;
-  text-decoration: none; flex-shrink: 0; transition: background 0.2s;
+  font-size: 11px;
+  font-weight: 500;
+  color: #c4b5ff;
+  background: rgba(140, 100, 255, 0.22);
+  border: 1px solid rgba(170, 130, 255, 0.45);
+  padding: 4px 9px;
+  border-radius: 6px;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
-.notion-link-btn:hover { background: rgba(160, 130, 255, 0.4); color: #fff; }
+.notion-link-btn:hover {
+  background: rgba(160, 120, 255, 0.5);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(160, 120, 255, 0.4);
+}
 
 @media(max-width:800px){
   .calendar { width: calc(100vw - 18px); height: calc(100vh - 18px); margin: 9px; padding: 18px; }
@@ -381,7 +391,6 @@ function loop(){
   animFrameId = requestAnimationFrame(loop);
 }
 
-/* ⚡ 배터리 절약: 탭 비활성화 시 애니메이션 일시 정지 */
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     isAnimating = false;
@@ -394,7 +403,6 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-/* API 및 달력 로직 */
 const API_URL = "https://my-universe-notion-api.121212jms.workers.dev/calendar";
 let remoteEvents = [];
 
@@ -461,6 +469,7 @@ const modalClose = document.getElementById("modalClose");
 
 let view = new Date(); view.setDate(1);
 
+/* 🚀 노션 바로가기 버튼을 포함하는 모달 open 함수 */
 function openModal(dateObj, dayEvents) {
   const y = dateObj.getFullYear();
   const m = dateObj.getMonth() + 1;
@@ -482,12 +491,15 @@ function openModal(dateObj, dayEvents) {
       
       item.appendChild(titleSpan);
 
-      if (ev.url) {
+      // 노션 원본 URL(ev.url 또는 ev.notionUrl)이 존재할 때 바로가기 버튼 추가
+      const notionUrl = ev.url || ev.notionUrl;
+      if (notionUrl) {
         const linkBtn = document.createElement("a");
-        linkBtn.href = ev.url;
+        linkBtn.href = notionUrl;
         linkBtn.target = "_blank";
+        linkBtn.rel = "noopener noreferrer";
         linkBtn.className = "notion-link-btn";
-        linkBtn.textContent = "노션 ↗";
+        linkBtn.textContent = "노션 바로가기 ↗";
         item.appendChild(linkBtn);
       }
 
